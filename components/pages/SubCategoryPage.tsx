@@ -4,11 +4,12 @@ import { CATEGORIES as DEFAULT_CATEGORIES, renderIconByKey } from '../../constan
 
 interface SubCategoryPageProps {
   category: Category | null;
+  categories?: Category[];
   onNavigate: (view: 'home') => void;
   onListingNavigate: (view: 'listings', query: string) => void;
 }
 
-const SubCategoryPage: React.FC<SubCategoryPageProps> = ({ category, onNavigate, onListingNavigate }) => {
+const SubCategoryPage: React.FC<SubCategoryPageProps> = ({ category, categories = [], onNavigate, onListingNavigate }) => {
   const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(category ? category.id : null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -23,7 +24,7 @@ const SubCategoryPage: React.FC<SubCategoryPageProps> = ({ category, onNavigate,
     setExpandedCategoryId(prev => prev === id ? null : id);
   };
 
-  const categoriesToRender = DEFAULT_CATEGORIES;
+  const categoriesToRender = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
 
   // Filter categories and subcategories based on search query
   const filteredCategories = categoriesToRender.map(cat => {

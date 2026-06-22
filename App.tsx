@@ -225,6 +225,24 @@ const App: React.FC = () => {
       return () => unsubscribe();
   }, [isReady]);
 
+  // Sync Categories from Firestore
+  useEffect(() => {
+      if (!db || !isReady) return;
+      const unsubscribe = onSnapshot(collection(db, "categories"), (snapshot) => {
+          const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+          if (items.length > 0) {
+              setCategories(items);
+          } else {
+              setCategories(DEFAULT_CATEGORIES);
+          }
+      }, (err) => {
+          if (!err.message.includes('permission')) {
+              console.error("Categories fetch error:", err.message);
+          }
+      });
+      return () => unsubscribe();
+  }, [isReady]);
+
   const fetchMoreListings = async () => {
       if (!db || loadingData || !hasMoreListings || !lastListingDoc) return;
       setLoadingData(true);
@@ -294,7 +312,7 @@ const App: React.FC = () => {
       case 'vendor-profile': return selectedVendorId ? <VendorProfilePage vendorId={selectedVendorId} currentUser={user} listings={listingsDB} onNavigate={handleNavigate as any} /> : null;
       case 'auth': return <AuthPage onLogin={handleLogin} onSignup={handleSignup} onVerifyAndLogin={() => handleNavigate('auth')} />;
       case 'account': return user ? <AccountPage user={user} listings={listingsDB} onLogout={() => { signOut(auth); setUser(null); handleNavigate('home'); }} onNavigate={handleNavigate as any} /> : <AuthPage onLogin={handleLogin} onSignup={handleSignup} onVerifyAndLogin={() => handleNavigate('auth')} />;
-      case 'subcategories': return <SubCategoryPage category={selectedCategory} onNavigate={() => handleGoBack()} onListingNavigate={(v, q) => handleNavigate(v as any, { query: q })} />;
+      case 'subcategories': return <SubCategoryPage category={selectedCategory} categories={categories} onNavigate={() => handleGoBack()} onListingNavigate={(v, q) => handleNavigate(v as any, { query: q })} />;
       case 'chats': return user ? <ChatPage currentUser={user} targetUser={chatTargetUser} onNavigate={() => handleGoBack()} /> : null;
       case 'favorites': return user ? <FavoritesPage user={user} listings={listingsDB} onNavigate={handleNavigate as any} /> : null;
       case 'saved-searches': return user ? <SavedSearchesPage searches={user.savedSearches || []} onNavigate={handleNavigate as any} /> : null;
