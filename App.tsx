@@ -64,7 +64,9 @@ const App: React.FC = () => {
     if (newView !== 'listings' && newView !== 'details') setSearchQuery('');
     
     if (payload?.listing && newView === 'details') setSelectedListing(payload.listing);
-    if (payload?.category && newView === 'subcategories') setSelectedCategory(payload.category);
+    if (newView === 'subcategories') {
+        setSelectedCategory(payload?.category || null);
+    }
     if (payload?.query !== undefined && newView === 'listings') setSearchQuery(payload.query);
     if (payload?.targetUser && newView === 'chats') setChatTargetUser(payload.targetUser);
     if (payload?.targetVendorId && newView === 'vendor-profile') setSelectedVendorId(payload.targetVendorId);
@@ -146,6 +148,33 @@ const App: React.FC = () => {
         capBackHandler.then(h => h.remove());
     };
   }, [handleGoBack, view]);
+
+  // Google Analytics Page View Tracking
+  useEffect(() => {
+    if (typeof (window as any).gtag === 'function') {
+      const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
+      if (GA_ID) {
+        let viewTitle = view.charAt(0).toUpperCase() + view.slice(1);
+        let pathName = `/${view}`;
+        
+        if (view === 'home') {
+          pathName = '/';
+          viewTitle = 'RizqDaan - Home';
+        } else if (view === 'details' && selectedListing) {
+          pathName = `/listings/${selectedListing.id}`;
+          viewTitle = `${selectedListing.title} - RizqDaan`;
+        } else if (view === 'subcategories') {
+          pathName = selectedCategory ? `/categories/${selectedCategory.id}` : '/categories';
+          viewTitle = selectedCategory ? `${selectedCategory.name} - Categories` : 'Main Categories';
+        }
+
+        (window as any).gtag('config', GA_ID, {
+          page_title: viewTitle,
+          page_path: pathName,
+        });
+      }
+    }
+  }, [view, selectedListing, selectedCategory]);
 
   // --- FIREBASE DATA LOGIC ---
   const triggerNativeNotification = (title: string, body: string) => {
